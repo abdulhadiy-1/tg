@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id() @default(uuid())
+  name     String
+  userName String  @unique
+  phone    String  @unique
+  photo    String?
+  password String
+
+  createdAt    DateTime       @default(now())
+  fromChat     Chat[]         @relation("fromUser")
+  toChat       Chat[]         @relation("toUser")
+  fromMessage  Message[]      @relation("fromUser")
+  toMessage    Message[]      @relation("toUser")
+  Group        Group[]        @relation("userGroup")
+  GroupMessage GroupMessage[]
+  GroupOwner        Group[]
+}
+
+model Chat {
+  id        String    @id @default(uuid())
+  from      User      @relation("fromUser", fields: [fromId], references: [id])
+  fromId    String
+  to        User      @relation("toUser", fields: [toId], references: [id])
+  toId      String
+  createdAt DateTime  @default(now())
+  Message   Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  from      User     @relation("fromUser", fields: [fromId], references: [id])
+  fromId    String
+  to        User     @relation("toUser", fields: [toId], references: [id])
+  toId      String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  chatId    String
+  text      String
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id           String         @id @default(uuid())
+  name         String
+  photo        String?
+  owner        User           @relation(fields: [ownerId], references: [id])
+  ownerId       String
+  groupName    String         @unique
+  users        User[]         @relation("userGroup")
+  createdAt    DateTime       @default(now())
+  GroupMessage GroupMessage[]
+}
+
+model GroupMessage {
+  id        String   @id @default(uuid())
+  from      User     @relation(fields: [fromId], references: [id])
+  fromId    String
+  group     Group    @relation(fields: [groupId], references: [id])
+  groupId   String
+  text      String
+  createdAt DateTime @default(now())
+}
